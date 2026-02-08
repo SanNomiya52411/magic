@@ -282,7 +282,7 @@ class SP {
 const spells = {
   feilanze: {
     name: 'ファイランツェ', desc: '炎の槍',
-    keywords: ['ファイランツェ', 'ふぁいらんつぇ', '炎の槍', 'ファイラン'],
+    keywords: ['ファイランツェ', 'ふぁいらんつぇ', '炎の槍', 'ほのおのやり', 'ファイラン', 'ファイランツエ', 'ファイランツ', 'ファイアランス', 'はいらんつぇ', 'ふぁいらん'],
     hue: 15, color: '#ff6030', screenColor: 'rgba(255,60,20,0.15)',
     cast(cx, cy) {
       // Fire lance shooting upward
@@ -310,7 +310,7 @@ const spells = {
   },
   feuerball: {
     name: 'フォイアーバル', desc: '火球を放つ',
-    keywords: ['フォイアーバル', 'ふぉいあーばる', '火球', 'フォイアー'],
+    keywords: ['フォイアーバル', 'ふぉいあーばる', '火球', 'かきゅう', '火球を放つ', 'フォイアー', 'ホイアーバル', 'ホイアー', 'ふぉいあー', 'ほいあーばる', 'フォイヤー'],
     hue: 20, color: '#ff4020', screenColor: 'rgba(255,50,10,0.18)',
     cast(cx, cy) {
       // Expanding fireball
@@ -336,7 +336,7 @@ const spells = {
   },
   blitzpfeil: {
     name: 'ブリツォール', desc: '雷の矢',
-    keywords: ['ブリツォール', 'ぶりつぉーる', '雷の矢', 'ブリツォ'],
+    keywords: ['ブリツォール', 'ぶりつぉーる', '雷の矢', 'かみなりのや', 'ブリツォ', 'ブリッツ', 'ぶりっつ', 'プリツォール', 'ブリツオール', 'ブリッツォール', 'ぶりつぉ'],
     hue: 55, color: '#ffff50', screenColor: 'rgba(255,255,80,0.2)',
     cast(cx, cy) {
       // Lightning arrow from top to center
@@ -373,7 +373,7 @@ const spells = {
   },
   frostspeer: {
     name: 'フロスピア', desc: '氷の槍',
-    keywords: ['フロスピア', 'ふろすぴあ', '氷の槍', 'フロス'],
+    keywords: ['フロスピア', 'ふろすぴあ', '氷の槍', 'こおりのやり', 'フロス', 'フロスト', 'ふろすと', 'プロスピア', 'フロスビア', 'ふろすぴ'],
     hue: 200, color: '#60c0ff', screenColor: 'rgba(80,180,255,0.15)',
     cast(cx, cy) {
       // Ice lance shooting upward
@@ -409,7 +409,7 @@ const spells = {
   },
   schnellheil: {
     name: 'シュネルハイル', desc: '応急手当',
-    keywords: ['シュネルハイル', 'しゅねるはいる', '応急手当', 'シュネル'],
+    keywords: ['シュネルハイル', 'しゅねるはいる', '応急手当', 'おうきゅうてあて', 'シュネル', 'しゅねる', 'シュネルハイ', 'シュネールハイル', 'シュネルハイ'],
     hue: 140, color: '#50ff78', screenColor: 'rgba(80,255,120,0.1)',
     cast(cx, cy) {
       // Gentle healing particles rising
@@ -438,7 +438,7 @@ const spells = {
   },
   siedeln: {
     name: 'ジーデルン', desc: 'お湯を沸かす',
-    keywords: ['ジーデルン', 'じーでるん', 'お湯', 'ジーデ'],
+    keywords: ['ジーデルン', 'じーでるん', 'お湯を沸かす', 'おゆをわかす', 'お湯', 'ジーデ', 'じーで', 'シーデルン', 'しーでるん', 'ジーデル'],
     hue: 210, color: '#6699ff', screenColor: 'rgba(80,130,255,0.1)',
     cast(cx, cy) {
       // Bubbles rising from below
@@ -469,7 +469,7 @@ const spells = {
   },
   barriere: {
     name: 'バリエーレ', desc: '簡素防護',
-    keywords: ['バリエーレ', 'ばりえーれ', '簡素防護', 'バリエ'],
+    keywords: ['バリエーレ', 'ばりえーれ', '簡素防護', 'かんそぼうご', 'バリエ', 'ばりえ', 'バリヤー', 'バリア', 'バリエール'],
     hue: 175, color: '#55ddcc', screenColor: 'rgba(80,220,200,0.1)',
     cast(cx, cy) {
       // Simple circular shield
@@ -496,7 +496,7 @@ const spells = {
   },
   gardiere: {
     name: 'ガーディエーレ', desc: '強化防護',
-    keywords: ['ガーディエーレ', 'がーでぃえーれ', '強化防護', 'ガーディ'],
+    keywords: ['ガーディエーレ', 'がーでぃえーれ', '強化防護', 'きょうかぼうご', 'ガーディ', 'がーでぃ', 'ガーディエール', 'ガーディアン', 'ガーデ'],
     hue: 180, color: '#44dddd', screenColor: 'rgba(60,220,220,0.15)',
     cast(cx, cy) {
       // Hexagonal shield
@@ -532,7 +532,7 @@ const spells = {
   },
   bastiere: {
     name: 'バスティエーレ', desc: '鉄壁',
-    keywords: ['バスティエーレ', 'ばすてぃえーれ', '鉄壁', 'バスティ'],
+    keywords: ['バスティエーレ', 'ばすてぃえーれ', '鉄壁', 'てっぺき', 'バスティ', 'ばすてぃ', 'バスティエール', 'バスティオン'],
     hue: 30, color: '#ccaa66', screenColor: 'rgba(200,170,100,0.15)',
     cast(cx, cy) {
       // Massive iron wall rising
@@ -563,7 +563,7 @@ const spells = {
   },
   flicken: {
     name: 'フリッケン', desc: '敗れた服を治す',
-    keywords: ['フリッケン', 'ふりっけん', '服を治す', 'フリッケ'],
+    keywords: ['フリッケン', 'ふりっけん', '敗れた服を治す', 'やぶれたふくをなおす', '服を治す', 'ふくをなおす', 'フリッケ', 'ふりっけ', 'フリッケ'],
     hue: 50, color: '#ddcc88', screenColor: 'rgba(220,200,120,0.08)',
     cast(cx, cy) {
       // Tiny sparkles like sewing needle
@@ -594,7 +594,7 @@ const spells = {
   },
   schleiern: {
     name: 'シュライアン', desc: '記憶を曇らせる',
-    keywords: ['シュライアン', 'しゅらいあん', '記憶を曇らせる', 'シュライ'],
+    keywords: ['シュライアン', 'しゅらいあん', '記憶を曇らせる', 'きおくをくもらせる', 'シュライ', 'しゅらい', 'シュライヤン', 'シュライアー'],
     hue: 270, color: '#9966cc', screenColor: 'rgba(120,60,180,0.18)',
     cast(cx, cy) {
       // Purple fog expanding
@@ -631,7 +631,7 @@ const spells = {
   },
   sichtbar: {
     name: 'ジヒトバール', desc: 'イブングハジの粉',
-    keywords: ['ジヒトバール', 'じひとばーる', 'イブングハジ', 'ジヒト'],
+    keywords: ['ジヒトバール', 'じひとばーる', 'イブングハジの粉', 'イブングハジ', 'ジヒト', 'じひと', 'ジヒトバー', 'シヒトバール', 'しひとばーる'],
     hue: 45, color: '#ffcc33', screenColor: 'rgba(255,200,50,0.12)',
     cast(cx, cy) {
       // Golden glitter powder spreading
@@ -663,7 +663,7 @@ const spells = {
   },
   glanzklinge: {
     name: 'グランツクリンゲ', desc: '光る刃',
-    keywords: ['グランツクリンゲ', 'ぐらんつくりんげ', '光る刃', 'グランツ'],
+    keywords: ['グランツクリンゲ', 'ぐらんつくりんげ', '光る刃', 'ひかるやいば', 'グランツ', 'ぐらんつ', 'グランツクリン', 'クランツクリンゲ'],
     hue: 55, color: '#ffffaa', screenColor: 'rgba(255,255,180,0.15)',
     cast(cx, cy) {
       // Blade slash arc
@@ -702,7 +702,7 @@ const spells = {
   },
   eisenleib: {
     name: 'アイゼンライプ', desc: '鉄の体',
-    keywords: ['アイゼンライプ', 'あいぜんらいぷ', '鉄の体', 'アイゼン'],
+    keywords: ['アイゼンライプ', 'あいぜんらいぷ', '鉄の体', 'てつのからだ', 'アイゼン', 'あいぜん', 'アイゼンライ', 'アイゼンライブ'],
     hue: 25, color: '#aaaacc', screenColor: 'rgba(170,170,200,0.12)',
     cast(cx, cy) {
       // Metallic aura surrounding body silhouette
@@ -731,7 +731,7 @@ const spells = {
   },
   manasinn: {
     name: 'マナジン', desc: '魔力を探知',
-    keywords: ['マナジン', 'まなじん', '魔力を探知', '魔力探知', 'マナ'],
+    keywords: ['マナジン', 'まなじん', '魔力を探知', 'まりょくをたんち', '魔力探知', 'まりょくたんち', 'マナジ', 'まなじ', 'マナシン'],
     hue: 240, color: '#7799ff', screenColor: 'rgba(100,140,255,0.1)',
     cast(cx, cy) {
       // Scanning pulse waves
@@ -760,7 +760,7 @@ const spells = {
   },
   zauberpfeil: {
     name: 'ツァウベロール', desc: '魔法の矢',
-    keywords: ['ツァウベロール', 'つぁうべろーる', '魔法の矢', 'ツァウベ'],
+    keywords: ['ツァウベロール', 'つぁうべろーる', '魔法の矢', 'まほうのや', 'ツァウベ', 'つぁうべ', 'ザウベロール', 'ざうべろーる', 'ツァオベロール', 'サウベロール'],
     hue: 280, color: '#cc77ff', screenColor: 'rgba(180,100,255,0.15)',
     cast(cx, cy) {
       // Multiple magic arrows shooting outward
@@ -1068,14 +1068,72 @@ function castSpell(spellKey) {
 }
 
 // ===== DETECT SPELL FROM TEXT =====
-function detectSpell(text) {
-  const t = text.toLowerCase().trim();
-  for (const [key, spell] of Object.entries(spells)) {
-    for (const kw of spell.keywords) {
-      if (t.includes(kw.toLowerCase())) return key;
+// Levenshtein distance for fuzzy matching
+function levenshtein(a, b) {
+  const m = a.length, n = b.length;
+  if (m === 0) return n;
+  if (n === 0) return m;
+  const d = Array.from({length: m+1}, (_,i) => {
+    const row = new Array(n+1);
+    row[0] = i;
+    return row;
+  });
+  for (let j = 1; j <= n; j++) d[0][j] = j;
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      const cost = a[i-1] === b[j-1] ? 0 : 1;
+      d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1]+cost);
     }
   }
-  return null;
+  return d[m][n];
+}
+
+// Katakana <-> Hiragana conversion for flexible matching
+function kataToHira(str) {
+  return str.replace(/[\u30A1-\u30F6]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60));
+}
+
+function detectSpell(text) {
+  const t = text.toLowerCase().trim();
+  const tHira = kataToHira(t);
+
+  // Pass 1: Exact substring match (highest priority)
+  for (const [key, spell] of Object.entries(spells)) {
+    for (const kw of spell.keywords) {
+      const kwLower = kw.toLowerCase();
+      if (t.includes(kwLower) || tHira.includes(kataToHira(kwLower))) return key;
+    }
+  }
+
+  // Pass 2: Fuzzy match - compare each word in transcript against keywords
+  // Split by common delimiters and also try sliding window
+  let bestMatch = null;
+  let bestScore = Infinity;
+  const threshold = 2; // Allow up to 2 character edits
+
+  for (const [key, spell] of Object.entries(spells)) {
+    for (const kw of spell.keywords) {
+      if (kw.length < 3) continue; // Skip very short keywords for fuzzy
+      const kwH = kataToHira(kw.toLowerCase());
+      const kwLen = kwH.length;
+
+      // Sliding window over the transcript
+      for (let start = 0; start <= tHira.length - Math.max(1, kwLen - threshold); start++) {
+        const windowSize = Math.min(kwLen + threshold, tHira.length - start);
+        for (let ws = Math.max(2, kwLen - threshold); ws <= windowSize; ws++) {
+          const sub = tHira.substring(start, start + ws);
+          const dist = levenshtein(sub, kwH);
+          // Dynamic threshold: allow more edits for longer words
+          const dynThreshold = Math.min(threshold, Math.floor(kwH.length * 0.35));
+          if (dist <= dynThreshold && dist < bestScore) {
+            bestScore = dist;
+            bestMatch = key;
+          }
+        }
+      }
+    }
+  }
+  return bestMatch;
 }
 
 // ===== SPEECH RECOGNITION =====
