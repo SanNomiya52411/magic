@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Magic - 声で魔法を唱えよう</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap');
+  body{
+    overflow:hidden;
+    background:#0a0a1a;
+    font-family:'MedievalSharp','Georgia',serif;
+    color:#e0d8c8;
+    user-select:none;
+  }
+  canvas#magicCanvas{
+    position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;
+  }
+  #ui{
+    position:fixed;top:0;left:0;width:100%;height:100%;z-index:2;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    pointer-events:none;
+  }
+  #ui>*{pointer-events:auto}
+  h1{
+    font-size:clamp(1.8rem,5vw,3.5rem);
+    text-align:center;
+    background:linear-gradient(135deg,#f0c27f,#fc5c7d,#6a82fb);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    margin-bottom:10px;
+    text-shadow:0 0 40px rgba(106,130,251,.3);
+    filter:drop-shadow(0 0 10px rgba(240,194,127,.3));
+  }
+  #subtitle{
+    font-size:clamp(.85rem,2vw,1.1rem);opacity:.7;margin-bottom:30px;text-align:center;
+  }
+  #micBtn{
+    width:120px;height:120px;border-radius:50%;
+    background:radial-gradient(circle at 30% 30%,#2a1f4e,#1a1035);
+    border:3px solid rgba(106,130,251,.4);
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+    transition:all .3s;position:relative;
+    box-shadow:0 0 30px rgba(106,130,251,.2),inset 0 0 30px rgba(106,130,251,.1);
+  }
+  #micBtn:hover{transform:scale(1.08);border-color:rgba(106,130,251,.8);box-shadow:0 0 50px rgba(106,130,251,.4)}
+  #micBtn.listening{
+    border-color:#fc5c7d;
+    box-shadow:0 0 50px rgba(252,92,125,.5),inset 0 0 30px rgba(252,92,125,.2);
+    animation:pulse 1.5s infinite;
+  }
+  @keyframes pulse{
+    0%,100%{box-shadow:0 0 50px rgba(252,92,125,.5)}
+    50%{box-shadow:0 0 80px rgba(252,92,125,.8)}
+  }
+  #micBtn svg{width:48px;height:48px;fill:#e0d8c8;transition:fill .3s}
+  #micBtn.listening svg{fill:#fc5c7d}
+  #micRing{
+    position:absolute;width:100%;height:100%;border-radius:50%;
+    border:2px solid transparent;
+    animation:none;
+  }
+  #micBtn.listening #micRing{
+    border-color:rgba(252,92,125,.5);
+    animation:ringPulse 2s infinite;
+  }
+  @keyframes ringPulse{
+    0%{transform:scale(1);opacity:1}
+    100%{transform:scale(1.8);opacity:0}
+  }
+  #status{
+    margin-top:20px;font-size:1rem;opacity:.8;
+    min-height:1.5em;text-align:center;
+    transition:all .3s;
+  }
+  #transcript{
+    margin-top:10px;font-size:1.4rem;
+    min-height:1.8em;text-align:center;
+    color:#f0c27f;
+    text-shadow:0 0 20px rgba(240,194,127,.5);
+    transition:all .3s;
+  }
+  #spellBook{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    z-index:3;pointer-events:auto;
+    background:rgba(10,10,26,.85);
+    border:1px solid rgba(106,130,251,.3);
+    border-radius:16px;padding:15px 25px;
+    backdrop-filter:blur(10px);
+    max-width:90vw;
+  }
+  #spellBook h3{
+    font-size:.95rem;opacity:.6;margin-bottom:8px;text-align:center;
+  }
+  #spellList{
+    display:flex;flex-wrap:wrap;gap:8px;justify-content:center;
+  }
+  .spell-tag{
+    padding:5px 14px;border-radius:20px;font-size:.85rem;
+    cursor:default;transition:all .3s;
+  }
+  .spell-tag:hover{transform:scale(1.05)}
+  .spell-fire{background:rgba(255,80,50,.2);border:1px solid rgba(255,80,50,.5);color:#ff8866}
+  .spell-ice{background:rgba(80,180,255,.2);border:1px solid rgba(80,180,255,.5);color:#80ccff}
+  .spell-thunder{background:rgba(255,255,80,.2);border:1px solid rgba(255,255,80,.5);color:#ffff88}
+  .spell-heal{background:rgba(80,255,120,.2);border:1px solid rgba(80,255,120,.5);color:#80ff88}
+  .spell-dark{background:rgba(160,80,255,.2);border:1px solid rgba(160,80,255,.5);color:#cc99ff}
+  .spell-wind{background:rgba(180,255,220,.2);border:1px solid rgba(180,255,220,.5);color:#bbffdd}
+  .spell-star{background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.5);color:#ffd700}
+  .spell-water{background:rgba(0,120,255,.2);border:1px solid rgba(0,120,255,.5);color:#66aaff}
+
+  #castEffect{
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    z-index:10;pointer-events:none;opacity:0;
+    transition:opacity .3s;
+  }
+  #castEffect.active{opacity:1}
+
+  #spellName{
+    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+    z-index:11;pointer-events:none;
+    font-size:clamp(2rem,8vw,5rem);
+    opacity:0;transition:all .5s;
+    text-shadow:0 0 40px currentColor;
+  }
+  #spellName.show{opacity:1;transform:translate(-50%,-50%) scale(1.2)}
+
+  .no-speech{
+    font-size:.85rem;opacity:.5;margin-top:15px;text-align:center;
+    max-width:400px;line-height:1.5;
+  }
+  .no-speech a{color:#6a82fb}
+</style>
+</head>
+<body>
+<canvas id="magicCanvas"></canvas>
+<div id="castEffect"></div>
+<div id="spellName"></div>
+<div id="ui">
+  <h1>Voice Magic</h1>
+  <div id="subtitle">マイクに向かって呪文を唱えよう</div>
+  <button id="micBtn" aria-label="マイクを起動">
+    <div id="micRing"></div>
+    <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>
+  </button>
+  <div id="status">タップしてマイクを起動</div>
+  <div id="transcript"></div>
+</div>
+<div id="spellBook">
+  <h3>📖 呪文一覧 - Spell Book</h3>
+  <div id="spellList">
+    <span class="spell-tag spell-fire">ファイア / Fire</span>
+    <span class="spell-tag spell-ice">ブリザド / Ice</span>
+    <span class="spell-tag spell-thunder">サンダー / Thunder</span>
+    <span class="spell-tag spell-heal">ケアル / Heal</span>
+    <span class="spell-tag spell-dark">ダーク / Dark</span>
+    <span class="spell-tag spell-wind">エアロ / Wind</span>
+    <span class="spell-tag spell-star">メテオ / Meteor</span>
+    <span class="spell-tag spell-water">ウォータ / Water</span>
+  </div>
+</div>
+<script>
+// ===== CANVAS SETUP =====
+const canvas = document.getElementById('magicCanvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ===== AMBIENT PARTICLES =====
+const ambientParticles = [];
+for (let i = 0; i < 60; i++) {
+  ambientParticles.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    r: Math.random() * 2 + 0.5,
+    dx: (Math.random() - 0.5) * 0.3,
+    dy: (Math.random() - 0.5) * 0.3 - 0.2,
+    opacity: Math.random() * 0.5 + 0.1,
+    hue: Math.random() * 60 + 220,
+  });
+}
+
+function drawAmbient() {
+  ambientParticles.forEach(p => {
+    p.x += p.dx;
+    p.y += p.dy;
+    if (p.y < -10) p.y = H + 10;
+    if (p.x < -10) p.x = W + 10;
+    if (p.x > W + 10) p.x = -10;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${p.hue},70%,70%,${p.opacity})`;
+    ctx.fill();
+  });
+}
+
+// ===== MAGIC CIRCLE =====
+let magicCircle = { active: false, radius: 0, targetRadius: 0, opacity: 0, rotation: 0, hue: 240 };
+
+function drawMagicCircle() {
+  if (magicCircle.opacity < 0.01) return;
+  const cx = W / 2, cy = H / 2;
+  magicCircle.rotation += 0.005;
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(magicCircle.rotation);
+  ctx.globalAlpha = magicCircle.opacity;
+
+  // Outer ring
+  ctx.beginPath();
+  ctx.arc(0, 0, magicCircle.radius, 0, Math.PI * 2);
+  ctx.strokeStyle = `hsla(${magicCircle.hue},80%,70%,0.6)`;
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Inner ring
+  ctx.beginPath();
+  ctx.arc(0, 0, magicCircle.radius * 0.7, 0, Math.PI * 2);
+  ctx.strokeStyle = `hsla(${magicCircle.hue},80%,70%,0.4)`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+
+  // Rune symbols (hexagon)
+  const sides = 6;
+  for (let i = 0; i < sides; i++) {
+    const angle = (i / sides) * Math.PI * 2;
+    const x1 = Math.cos(angle) * magicCircle.radius * 0.85;
+    const y1 = Math.sin(angle) * magicCircle.radius * 0.85;
+    const x2 = Math.cos(angle + Math.PI * 2 / sides) * magicCircle.radius * 0.85;
+    const y2 = Math.sin(angle + Math.PI * 2 / sides) * magicCircle.radius * 0.85;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.strokeStyle = `hsla(${magicCircle.hue},80%,70%,0.3)`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Small circles at vertices
+    ctx.beginPath();
+    ctx.arc(x1, y1, 4, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${magicCircle.hue},80%,80%,0.6)`;
+    ctx.fill();
+  }
+
+  // Cross lines
+  for (let i = 0; i < 4; i++) {
+    const angle = (i / 4) * Math.PI * 2 + magicCircle.rotation * 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(Math.cos(angle) * magicCircle.radius * 0.65, Math.sin(angle) * magicCircle.radius * 0.65);
+    ctx.strokeStyle = `hsla(${magicCircle.hue},60%,60%,0.2)`;
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+// ===== SPELL PARTICLES =====
+let spellParticles = [];
+
+class SpellParticle {
+  constructor(x, y, config) {
+    this.x = x; this.y = y;
+    this.vx = config.vx || (Math.random() - 0.5) * 4;
+    this.vy = config.vy || (Math.random() - 0.5) * 4;
+    this.life = config.life || 1;
+    this.decay = config.decay || 0.008 + Math.random() * 0.01;
+    this.r = config.r || Math.random() * 4 + 2;
+    this.hue = config.hue || 0;
+    this.sat = config.sat || 80;
+    this.light = config.light || 60;
+    this.gravity = config.gravity || 0;
+    this.trail = config.trail || false;
+    this.trailHistory = [];
+    this.friction = config.friction || 0.99;
+    this.glow = config.glow || false;
+  }
+  update() {
+    if (this.trail) {
+      this.trailHistory.push({ x: this.x, y: this.y });
+      if (this.trailHistory.length > 8) this.trailHistory.shift();
+    }
+    this.vx *= this.friction;
+    this.vy *= this.friction;
+    this.vy += this.gravity;
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life -= this.decay;
+  }
+  draw(ctx) {
+    if (this.life <= 0) return;
+    const alpha = Math.max(0, this.life);
+    if (this.trail) {
+      for (let i = 0; i < this.trailHistory.length; i++) {
+        const t = this.trailHistory[i];
+        const ta = (i / this.trailHistory.length) * alpha * 0.5;
+        ctx.beginPath();
+        ctx.arc(t.x, t.y, this.r * (i / this.trailHistory.length), 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${this.hue},${this.sat}%,${this.light}%,${ta})`;
+        ctx.fill();
+      }
+    }
+    if (this.glow) {
+      ctx.save();
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = `hsla(${this.hue},${this.sat}%,${this.light}%,${alpha})`;
+    }
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r * alpha, 0, Math.PI * 2);
+    ctx.fillStyle = `hsla(${this.hue},${this.sat}%,${this.light}%,${alpha})`;
+    ctx.fill();
+    if (this.glow) ctx.restore();
+  }
+}
+
+// ===== SPELL DEFINITIONS =====
+const spells = {
+  fire: {
+    name: 'ファイア',
+    keywords: ['ファイア', 'ファイアー', 'fire', 'ファイヤー', 'ファイヤ', '炎', 'ほのお'],
+    hue: 15, color: '#ff5032', screenColor: 'rgba(255,60,20,0.15)',
+    cast(cx, cy) {
+      for (let i = 0; i < 150; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 6 + 2;
+        spellParticles.push(new SpellParticle(cx, cy, {
+          vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed - Math.random() * 3,
+          hue: Math.random() * 40, sat: 90, light: 55 + Math.random() * 20,
+          r: Math.random() * 6 + 2, gravity: -0.05, decay: 0.008 + Math.random() * 0.008,
+          trail: true, glow: true, friction: 0.98,
+        }));
+      }
+      // Embers
+      for (let i = 0; i < 40; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        spellParticles.push(new SpellParticle(cx, cy, {
+          vx: Math.cos(angle) * (Math.random() * 2), vy: -Math.random() * 5 - 2,
+          hue: 40 + Math.random() * 20, sat: 100, light: 70,
+          r: Math.random() * 2 + 1, gravity: -0.02, decay: 0.005,
+          trail: false, glow: true, friction: 0.99,
+        }));
+      }
+    }
+  },
+  ice: {
+    name: 'ブリザド',
+    keywords: ['ブリザド', 'ブリザード', 'ice', 'アイス', '氷', 'こおり', 'フリーズ', 'freeze'],
+    hue: 200, color: '#50b4ff', screenColor: 'rgba(80,180,255,0.15)',
+    cast(cx, cy) {
+      // Ice shards radiating out
+      for (let i = 0; i < 120; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 5 + 1;
+        spellParticles.push(new SpellParticle(cx, cy, {
+          vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+          hue: 190 + Math.random() * 30, sat: 70, light: 70 + Math.random() * 20,
+          r: Math.random() * 4 + 1, gravity: 0, decay: 0.006 + Math.random() * 0.006,
+          trail: true, glow: true, friction: 0.97,
+        }));
+      }
+      // Snowflakes
+      for (let i = 0; i < 60; i++) {
+        spellParticles.push(new SpellParticle(
+          Math.random() * W, -20, {
+            vx: (Math.random() - 0.5) * 2, vy: Math.random() * 2 + 1,
+            hue: 200, sat: 50, light: 90,
+            r: Math.random() * 3 + 1, gravity: 0, decay: 0.003,
+            trail: false, glow: false, friction: 0.999,
+          }
+        ));
+      }
+    }
+  },
+  thunder: {
+    name: 'サンダー',
+    keywords: ['サンダー', 'thunder', 'サンダ', '雷', 'かみなり', 'ライトニング', 'lightning'],
+    hue: 55, color: '#ffff50', screenColor: 'rgba(255,255,80,0.2)',
+    cast(cx, cy) {
+      // Lightning bolts
+      for (let b = 0; b < 5; b++) {
+        let lx = cx + (Math.random() - 0.5) * 200;
+        let ly = 0;
+        const targetY = cy + Math.random() * 100;
+        while (ly < targetY) {
+          const nlx = lx + (Math.random() - 0.5) * 60;
+          const nly = ly + Math.random() * 40 + 10;
+          for (let i = 0; i < 5; i++) {
+            const t = i / 5;
+            spellParticles.push(new SpellParticle(
+              lx + (nlx - lx) * t + (Math.random() - 0.5) * 5,
+              ly + (nly - ly) * t + (Math.random() - 0.5) * 5, {
+                vx: (Math.random() - 0.5) * 1, vy: (Math.random() - 0.5) * 1,
+                hue: 50 + Math.random() * 20, sat: 100, light: 80 + Math.random() * 20,
+                r: Math.random() * 3 + 1, gravity: 0, decay: 0.02 + Math.random() * 0.02,
+                trail: false, glow: true, friction: 0.95,
+              }
+            ));
+          }
+          lx = nlx; ly = nly;
+        }
+      }
+      // Spark burst at center
+      for (let i = 0; i < 80; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 8 + 2;
+        spellParticles.push(new SpellParticle(cx, cy, {
+          vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+          hue: 55, sat: 100, light: 90,
+          r: Math.random() * 2 + 0.5, gravity: 0, decay: 0.02 + Math.random() * 0.02,
+          trail: true, glow: true, friction: 0.96,
+        }));
+      }
+    }
+  },
+  heal: {
+    name: 'ケアル',
+    keywords: ['ケアル', 'heal', 'ヒール', '回復', 'かいふく', 'ケアルラ', 'ケアルガ', 'cure'],
+    hue: 140, color: '#50ff78', screenColor: 'rgba(80,255,120,0.12)',
+    cast(cx, cy) {
+      // Rising healing particles
+      for (let i = 0; i < 100; i++) {
+        const x = cx + (Math.random() - 0.5) * 300;
+        const y = cy + Math.random() * 200;
+        spellParticles.push(new SpellParticle(x, y, {
+          vx: (Math.random() - 0.5) * 1, vy: -Math.random() * 3 - 1,
+          hue: 120 + Math.random() * 40, sat: 70, light: 65 + Math.random() * 20,
+          r: Math.random() * 4 + 2, gravity: -0.02, decay: 0.005 + Math.random() * 0.005,
+          trail: true, glow: true, friction: 0.99,
+        }));
+      }
+      // Sparkle ring
+      for (let i = 0; i < 40; i++) {
+        const angle = (i / 40) * Math.PI * 2;
+        const radius = 100 + Math.random() * 50;
+        spellParticles.push(new SpellParticle(
+          cx + Math.cos(angle) * radius,
+          cy + Math.sin(angle) * radius, {
+            vx: Math.cos(angle) * 0.5, vy: Math.sin(angle) * 0.5 - 1,
+            hue: 130, sat: 80, light: 80,
+            r: Math.random() * 3 + 1, gravity: -0.01, decay: 0.008,
+            trail: false, glow: true, friction: 0.99,
+          }
+        ));
+      }
+    }
+  },
+  dark: {
+    name: 'ダーク',
+    keywords: ['ダーク', 'dark', '闇', 'やみ', 'ダークネス', 'darkness', 'シャドウ', 'shadow'],
+    hue: 280, color: '#a050ff', screenColor: 'rgba(100,30,160,0.2)',
+    cast(cx, cy) {
+      // Dark vortex
+      for (let i = 0; i < 150; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const dist = Math.random() * 200 + 50;
+        const speed = Math.random() * 2 + 1;
+        spellParticles.push(new SpellParticle(
+          cx + Math.cos(angle) * dist,
+          cy + Math.sin(angle) * dist, {
+            vx: Math.cos(angle + Math.PI / 2) * speed + (cx - (cx + Math.cos(angle) * dist)) * 0.01,
+            vy: Math.sin(angle + Math.PI / 2) * speed + (cy - (cy + Math.sin(angle) * dist)) * 0.01,
+            hue: 270 + Math.random() * 30, sat: 60 + Math.random() * 30, light: 30 + Math.random() * 30,
+            r: Math.random() * 5 + 2, gravity: 0, decay: 0.005 + Math.random() * 0.005,
+            trail: true, glow: true, friction: 0.98,
+          }
+        ));
+      }
+      // Dark core
+      for (let i = 0; i < 30; i++) {
+        spellParticles.push(new SpellParticle(cx, cy, {
+          vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2,
+          hue: 290, sat: 80, light: 15,
+          r: Math.random() * 8 + 4, gravity: 0, decay: 0.004,
+          trail: false, glow: true, friction: 0.99,
+        }));
+      }
+    }
+  },
+  wind: {
+    name: 'エアロ',
+    keywords: ['エアロ', 'wind', '風', 'かぜ', 'ウィンド', 'エアロガ'],
+    hue: 160, color: '#b4ffdc', screenColor: 'rgba(180,255,220,0.1)',
+    cast(cx, cy) {
+      // Spiral wind
+      for (let i = 0; i < 200; i++) {
+        const angle = (i / 200) * Math.PI * 8;
+        const dist = (i / 200) * 200;
+        const speed = 3 + Math.random() * 2;
+        spellParticles.push(new SpellParticle(cx, cy, {
+          vx: Math.cos(angle) * speed + (Math.random() - 0.5),
+          vy: Math.sin(angle) * speed + (Math.random() - 0.5) - 1,
+          hue: 150 + Math.random() * 30, sat: 50, light: 75 + Math.random() * 15,
+          r: Math.random() * 3 + 1, gravity: -0.01, decay: 0.006 + Math.random() * 0.004,
+          trail: true, glow: false, friction: 0.98,
+        }));
+      }
+      // Leaves
+      for (let i = 0; i < 20; i++) {
+        spellParticles.push(new SpellParticle(
+          Math.random() * W, Math.random() * H, {
+            vx: Math.random() * 6 + 2, vy: (Math.random() - 0.5) * 3,
+            hue: 120 + Math.random() * 20, sat: 60, light: 50,
+            r: Math.random() * 4 + 2, gravity: 0.02, decay: 0.004,
+            trail: true, glow: false, friction: 0.995,
+          }
+        ));
+      }
+    }
+  },
+  meteor: {
+    name: 'メテオ',
+    keywords: ['メテオ', 'meteor', '隕石', 'いんせき', 'メテオガ', 'コメット', 'comet'],
+    hue: 35, color: '#ffd700', screenColor: 'rgba(255,150,0,0.2)',
+    cast(cx, cy) {
+      // Multiple meteors
+      for (let m = 0; m < 8; m++) {
+        const startX = Math.random() * W;
+        const startY = -50;
+        const targetX = cx + (Math.random() - 0.5) * 200;
+        const targetY = cy + (Math.random() - 0.5) * 100;
+        const dx = targetX - startX;
+        const dy = targetY - startY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const speed = 8 + Math.random() * 4;
+        const steps = dist / speed;
+        setTimeout(() => {
+          for (let i = 0; i < steps && i < 40; i++) {
+            setTimeout(() => {
+              const t = i / steps;
+              const px = startX + dx * t;
+              const py = startY + dy * t;
+              for (let j = 0; j < 5; j++) {
+                spellParticles.push(new SpellParticle(px, py, {
+                  vx: (Math.random() - 0.5) * 3 - dx / dist * 2,
+                  vy: (Math.random() - 0.5) * 3 - dy / dist * 2,
+                  hue: 25 + Math.random() * 25, sat: 100, light: 55 + Math.random() * 25,
+                  r: Math.random() * 4 + 1, gravity: 0.02, decay: 0.015,
+                  trail: true, glow: true, friction: 0.97,
+                }));
+              }
+              // Impact
+              if (i >= steps - 2 || i >= 38) {
+                for (let k = 0; k < 30; k++) {
+                  const angle = Math.random() * Math.PI * 2;
+                  const sp = Math.random() * 6 + 2;
+                  spellParticles.push(new SpellParticle(targetX, targetY, {
+                    vx: Math.cos(angle) * sp, vy: Math.sin(angle) * sp,
+                    hue: 15 + Math.random() * 30, sat: 100, light: 60 + Math.random() * 20,
+                    r: Math.random() * 5 + 2, gravity: 0.05, decay: 0.01,
+                    trail: true, glow: true, friction: 0.97,
+                  }));
+                }
+              }
+            }, i * 20);
+          }
+        }, m * 200);
+      }
+    }
+  },
+  water: {
+    name: 'ウォータ',
+    keywords: ['ウォータ', 'ウォーター', 'water', '水', 'みず', 'アクア', 'aqua'],
+    hue: 210, color: '#0078ff', screenColor: 'rgba(0,100,255,0.15)',
+    cast(cx, cy) {
+      // Water wave
+      for (let wave = 0; wave < 3; wave++) {
+        setTimeout(() => {
+          for (let i = 0; i < 80; i++) {
+            const angle = (i / 80) * Math.PI * 2;
+            const speed = 3 + wave * 1.5 + Math.random();
+            spellParticles.push(new SpellParticle(cx, cy, {
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed * 0.6,
+              hue: 200 + Math.random() * 30, sat: 80, light: 50 + Math.random() * 20,
+              r: Math.random() * 5 + 2, gravity: 0.03, decay: 0.006 + Math.random() * 0.004,
+              trail: true, glow: true, friction: 0.98,
+            }));
+          }
+        }, wave * 300);
+      }
+      // Bubbles
+      for (let i = 0; i < 30; i++) {
+        spellParticles.push(new SpellParticle(
+          cx + (Math.random() - 0.5) * 200,
+          cy + Math.random() * 100, {
+            vx: (Math.random() - 0.5) * 1, vy: -Math.random() * 2 - 1,
+            hue: 210, sat: 60, light: 75,
+            r: Math.random() * 5 + 3, gravity: -0.03, decay: 0.004,
+            trail: false, glow: true, friction: 0.995,
+          }
+        ));
+      }
+    }
+  },
+};
+
+// ===== SOUND EFFECTS (Web Audio API) =====
+let audioCtx;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function playSpellSound(type) {
+  const ctx = getAudioCtx();
+  const now = ctx.currentTime;
+
+  switch(type) {
+    case 'fire': {
+      // Whoosh + crackle
+      const noise = ctx.createBufferSource();
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.8, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.3));
+      noise.buffer = buf;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 800; bp.Q.value = 0.5;
+      const gain = ctx.createGain(); gain.gain.setValueAtTime(0.4, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+      noise.connect(bp).connect(gain).connect(ctx.destination);
+      noise.start(now);
+      // Low rumble
+      const osc = ctx.createOscillator(); osc.type = 'sawtooth'; osc.frequency.setValueAtTime(80, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.6);
+      const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.15, now); g2.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      osc.connect(g2).connect(ctx.destination); osc.start(now); osc.stop(now + 0.6);
+      break;
+    }
+    case 'ice': {
+      // Crystal shimmer
+      [800, 1200, 1600, 2400].forEach((freq, i) => {
+        const osc = ctx.createOscillator(); osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + i * 0.08);
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0, now + i * 0.08);
+        gain.gain.linearRampToValueAtTime(0.12, now + i * 0.08 + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.5);
+        osc.connect(gain).connect(ctx.destination); osc.start(now + i * 0.08); osc.stop(now + i * 0.08 + 0.5);
+      });
+      // Crackle
+      const noise = ctx.createBufferSource();
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.5, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * (Math.random() > 0.95 ? 1 : 0.05);
+      noise.buffer = buf;
+      const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 3000;
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.15, now); g.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+      noise.connect(hp).connect(g).connect(ctx.destination); noise.start(now);
+      break;
+    }
+    case 'thunder': {
+      // Electric zap
+      const osc = ctx.createOscillator(); osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+      const gain = ctx.createGain(); gain.gain.setValueAtTime(0.3, now);
+      gain.gain.setValueAtTime(0.05, now + 0.05); gain.gain.setValueAtTime(0.3, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      const dist = ctx.createWaveShaperFunction ? null : ctx.createWaveShaper();
+      if (dist) {
+        const curve = new Float32Array(256);
+        for (let i = 0; i < 256; i++) { const x = (i / 128) - 1; curve[i] = (Math.PI + 3) * x / (Math.PI + 3 * Math.abs(x)); }
+        dist.curve = curve;
+        osc.connect(dist).connect(gain).connect(ctx.destination);
+      } else {
+        osc.connect(gain).connect(ctx.destination);
+      }
+      osc.start(now); osc.stop(now + 0.4);
+      // Boom
+      const boom = ctx.createOscillator(); boom.type = 'sine';
+      boom.frequency.setValueAtTime(60, now + 0.1); boom.frequency.exponentialRampToValueAtTime(20, now + 0.6);
+      const bg = ctx.createGain(); bg.gain.setValueAtTime(0.3, now + 0.1); bg.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      boom.connect(bg).connect(ctx.destination); boom.start(now + 0.1); boom.stop(now + 0.6);
+      break;
+    }
+    case 'heal': {
+      // Gentle rising tones
+      [0, 1, 2, 3, 4].forEach((n, i) => {
+        const freq = 400 * Math.pow(2, [0, 4, 7, 12, 16][i] / 12);
+        const osc = ctx.createOscillator(); osc.type = 'sine'; osc.frequency.value = freq;
+        const gain = ctx.createGain();
+        gain.gain.setValueAtTime(0, now + i * 0.15);
+        gain.gain.linearRampToValueAtTime(0.1, now + i * 0.15 + 0.1);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.6);
+        osc.connect(gain).connect(ctx.destination); osc.start(now + i * 0.15); osc.stop(now + i * 0.15 + 0.6);
+      });
+      break;
+    }
+    case 'dark': {
+      // Ominous drone
+      const osc = ctx.createOscillator(); osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(55, now);
+      const lfo = ctx.createOscillator(); lfo.frequency.value = 5;
+      const lfoGain = ctx.createGain(); lfoGain.gain.value = 10;
+      lfo.connect(lfoGain).connect(osc.frequency);
+      const gain = ctx.createGain(); gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 1);
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 300;
+      osc.connect(lp).connect(gain).connect(ctx.destination);
+      osc.start(now); lfo.start(now); osc.stop(now + 1); lfo.stop(now + 1);
+      // High dissonant
+      const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = 666;
+      const g2 = ctx.createGain(); g2.gain.setValueAtTime(0.05, now); g2.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+      o2.connect(g2).connect(ctx.destination); o2.start(now); o2.stop(now + 0.8);
+      break;
+    }
+    case 'wind': {
+      // Wind whoosh
+      const noise = ctx.createBufferSource();
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 1, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+      noise.buffer = buf;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass';
+      bp.frequency.setValueAtTime(300, now); bp.frequency.linearRampToValueAtTime(1200, now + 0.3);
+      bp.frequency.linearRampToValueAtTime(400, now + 1);
+      bp.Q.value = 1;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0, now); gain.gain.linearRampToValueAtTime(0.25, now + 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1);
+      noise.connect(bp).connect(gain).connect(ctx.destination); noise.start(now);
+      break;
+    }
+    case 'meteor': {
+      // Descending scream + explosion
+      const osc = ctx.createOscillator(); osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(2000, now); osc.frequency.exponentialRampToValueAtTime(60, now + 0.5);
+      const gain = ctx.createGain(); gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+      osc.connect(gain).connect(ctx.destination); osc.start(now); osc.stop(now + 0.5);
+      // Explosion
+      const noise = ctx.createBufferSource();
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 1, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.3));
+      noise.buffer = buf;
+      const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 500;
+      const g2 = ctx.createGain(); g2.gain.setValueAtTime(0, now + 0.3); g2.gain.linearRampToValueAtTime(0.4, now + 0.35);
+      g2.gain.exponentialRampToValueAtTime(0.001, now + 1.3);
+      noise.connect(lp).connect(g2).connect(ctx.destination); noise.start(now + 0.3);
+      break;
+    }
+    case 'water': {
+      // Splash + bubbles
+      const noise = ctx.createBufferSource();
+      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.6, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.2));
+      noise.buffer = buf;
+      const bp = ctx.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 0.8;
+      const gain = ctx.createGain(); gain.gain.setValueAtTime(0.25, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      noise.connect(bp).connect(gain).connect(ctx.destination); noise.start(now);
+      // Bubble sounds
+      [0.2, 0.35, 0.45, 0.55].forEach(t => {
+        const osc = ctx.createOscillator(); osc.type = 'sine';
+        osc.frequency.setValueAtTime(300 + Math.random() * 400, now + t);
+        osc.frequency.exponentialRampToValueAtTime(100, now + t + 0.15);
+        const g = ctx.createGain(); g.gain.setValueAtTime(0.08, now + t);
+        g.gain.exponentialRampToValueAtTime(0.001, now + t + 0.15);
+        osc.connect(g).connect(ctx.destination); osc.start(now + t); osc.stop(now + t + 0.15);
+      });
+      break;
+    }
+  }
+}
+
+// ===== CAST SPELL =====
+const castEffectEl = document.getElementById('castEffect');
+const spellNameEl = document.getElementById('spellName');
+
+function castSpell(spellKey) {
+  const spell = spells[spellKey];
+  if (!spell) return;
+
+  const cx = W / 2, cy = H / 2;
+
+  // Activate magic circle
+  magicCircle.active = true;
+  magicCircle.targetRadius = Math.min(W, H) * 0.25;
+  magicCircle.hue = spell.hue;
+
+  // Screen flash
+  castEffectEl.style.background = spell.screenColor;
+  castEffectEl.classList.add('active');
+  setTimeout(() => castEffectEl.classList.remove('active'), 500);
+
+  // Show spell name
+  spellNameEl.textContent = spell.name;
+  spellNameEl.style.color = spell.color;
+  spellNameEl.classList.add('show');
+  setTimeout(() => spellNameEl.classList.remove('show'), 1500);
+
+  // Sound
+  playSpellSound(spellKey);
+
+  // Particles
+  spell.cast(cx, cy);
+
+  // Fade magic circle
+  setTimeout(() => {
+    magicCircle.active = false;
+  }, 2000);
+}
+
+// ===== DETECT SPELL FROM TEXT =====
+function detectSpell(text) {
+  const lower = text.toLowerCase().trim();
+  for (const [key, spell] of Object.entries(spells)) {
+    for (const kw of spell.keywords) {
+      if (lower.includes(kw.toLowerCase())) {
+        return key;
+      }
+    }
+  }
+  return null;
+}
+
+// ===== SPEECH RECOGNITION =====
+const micBtn = document.getElementById('micBtn');
+const statusEl = document.getElementById('status');
+const transcriptEl = document.getElementById('transcript');
+let recognition = null;
+let isListening = false;
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'ja-JP';
+  recognition.maxAlternatives = 3;
+
+  recognition.onresult = (event) => {
+    let interim = '';
+    let final = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const result = event.results[i];
+      // Check all alternatives
+      for (let j = 0; j < result.length; j++) {
+        const transcript = result[j].transcript;
+        if (result.isFinal) {
+          final += transcript;
+        } else {
+          if (j === 0) interim += transcript;
+        }
+        // Try to detect spell in each alternative
+        const detected = detectSpell(transcript);
+        if (detected && result.isFinal) {
+          transcriptEl.textContent = `✦ ${transcript} ✦`;
+          castSpell(detected);
+          return;
+        }
+      }
+    }
+    if (final) {
+      transcriptEl.textContent = final;
+      const detected = detectSpell(final);
+      if (detected) castSpell(detected);
+    } else if (interim) {
+      transcriptEl.textContent = interim;
+      // Check interim too for faster response
+      const detected = detectSpell(interim);
+      if (detected) {
+        castSpell(detected);
+      }
+    }
+  };
+
+  recognition.onstart = () => {
+    isListening = true;
+    micBtn.classList.add('listening');
+    statusEl.textContent = '聴いています... 呪文を唱えてください';
+  };
+
+  recognition.onend = () => {
+    if (isListening) {
+      // Auto-restart
+      try { recognition.start(); } catch(e) {}
+    } else {
+      micBtn.classList.remove('listening');
+      statusEl.textContent = 'タップしてマイクを起動';
+    }
+  };
+
+  recognition.onerror = (e) => {
+    if (e.error === 'not-allowed') {
+      statusEl.textContent = 'マイクへのアクセスが拒否されました';
+      isListening = false;
+      micBtn.classList.remove('listening');
+    } else if (e.error !== 'no-speech' && e.error !== 'aborted') {
+      statusEl.textContent = `エラー: ${e.error}`;
+    }
+  };
+} else {
+  statusEl.innerHTML = '';
+  const noSpeech = document.createElement('div');
+  noSpeech.className = 'no-speech';
+  noSpeech.innerHTML = 'お使いのブラウザは音声認識に対応していません。<br>Chrome または Edge をお使いください。<br><br>代わりに画面下の呪文をタップして試せます！';
+  document.getElementById('ui').appendChild(noSpeech);
+}
+
+micBtn.addEventListener('click', () => {
+  if (!recognition) return;
+  if (isListening) {
+    isListening = false;
+    recognition.stop();
+  } else {
+    isListening = true;
+    transcriptEl.textContent = '';
+    try { recognition.start(); } catch(e) { recognition.stop(); setTimeout(() => recognition.start(), 100); }
+  }
+});
+
+// Click spell tags to cast (fallback for no-mic)
+document.querySelectorAll('.spell-tag').forEach(tag => {
+  tag.style.cursor = 'pointer';
+  tag.addEventListener('click', () => {
+    const text = tag.textContent;
+    const detected = detectSpell(text);
+    if (detected) {
+      transcriptEl.textContent = `✦ ${spells[detected].name} ✦`;
+      castSpell(detected);
+    }
+  });
+});
+
+// ===== ANIMATION LOOP =====
+function animate() {
+  ctx.fillStyle = 'rgba(10,10,26,0.15)';
+  ctx.fillRect(0, 0, W, H);
+
+  drawAmbient();
+
+  // Update magic circle
+  if (magicCircle.active) {
+    magicCircle.radius += (magicCircle.targetRadius - magicCircle.radius) * 0.08;
+    magicCircle.opacity += (0.8 - magicCircle.opacity) * 0.08;
+  } else {
+    magicCircle.opacity *= 0.96;
+    magicCircle.radius *= 0.98;
+  }
+  drawMagicCircle();
+
+  // Update and draw spell particles
+  spellParticles.forEach(p => { p.update(); p.draw(ctx); });
+  spellParticles = spellParticles.filter(p => p.life > 0);
+
+  requestAnimationFrame(animate);
+}
+animate();
+</script>
+</body>
+</html>
